@@ -1,1 +1,1261 @@
+<div class="stickman-container">
+    <!-- 棺材 -->
+    <div class="coffin">
+      <div class="coffin-wood-grain"></div>
+      <div class="coffin-decoration top"></div>
+      <div class="coffin-decoration bottom"></div>
+      <div class="coffin-nail"></div>
+      <div class="coffin-nail"></div>
+      <div class="coffin-nail"></div>
+      <div class="coffin-nail"></div>
+      <div class="coffin-nail"></div>
+      <div class="coffin-nail"></div>
+      <div class="coffin-cross"></div>
+    </div>
+
+    <!-- Akile 抬棺人（左侧） -->
+    <div class="stickman akile">
+      <div class="stickman-head"></div>
+      <div class="stickman-body"></div>
+      <div class="stickman-arm left"></div>
+      <div class="stickman-arm right"></div>
+      <div class="stickman-leg left"></div>
+      <div class="stickman-leg right"></div>
+      <div class="music-note">🎵</div>
+      <div class="music-note">🎶</div>
+    </div>
+
+    <!-- Hytron 抬棺人（右侧） -->
+    <div class="stickman hytron">
+      <div class="stickman-head"></div>
+      <div class="stickman-body"></div>
+      <div class="stickman-arm left"></div>
+      <div class="stickman-arm right"></div>
+      <div class="stickman-leg left"></div>
+      <div class="stickman-leg right"></div>
+      <div class="music-note">🎵</div>
+      <div class="music-note">🎶</div>
+    </div>
+  </div>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      font-family: 'Georgia', 'KaiTi', '楷体', serif;
+      background: #000;
+      position: relative;
+    }
+
+    /* 自定义滚动条样式 */
+    body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    body::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    body::-webkit-scrollbar-thumb {
+      background: rgba(255, 215, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 215, 0, 0.5);
+    }
+
+    /* 背景图片层 */
+    .background {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .background-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(50%) brightness(0.6) blur(2px);
+      opacity: 0.8;
+    }
+
+    /* 暗色蒙版 */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(0, 0, 0, 0.3) 0%,
+        rgba(0, 0, 0, 0.5) 70%,
+        rgba(0, 0, 0, 0.7) 100%
+      );
+      z-index: 2;
+    }
+
+    /* 主容器 */
+    .memorial-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 2rem 4rem 2rem;
+    }
+
+    /* 灵堂标题 */
+    .memorial-title {
+      font-size: 3rem;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+      margin-bottom: 3rem;
+      letter-spacing: 0.5rem;
+      font-weight: 300;
+      opacity: 0;
+      animation: fadeIn 2s ease-in forwards;
+    }
+
+    /* 遗像容器 */
+    .portrait-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      margin-bottom: 2rem;
+      perspective: 1500px;
+      perspective-origin: center center;
+      isolation: isolate;
+      overflow: visible;
+    }
+
+    /* 3D旋转场景 */
+    .portrait-scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      z-index: 10;
+    }
+
+    /* 相框 */
+    .portrait-frame {
+      position: absolute;
+      inset: -20px;
+      background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+      border: 3px solid #4a4a4a;
+      box-shadow: 
+        0 0 30px rgba(0, 0, 0, 0.8),
+        inset 0 0 20px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(255, 255, 255, 0.1);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* 确保相框不遮挡内容 */
+    .portrait-container > .portrait-frame {
+      z-index: 1;
+    }
+
+    .portrait-container > .portrait-scene {
+      z-index: 10;
+    }
+
+    .portrait-container > .ribbon {
+      z-index: 100;
+    }
+
+    /* 3D环境光效果 */
+    @keyframes ambientGlow {
+      0%, 100% {
+        box-shadow: 
+          0 0 40px rgba(255, 215, 0, 0.3),
+          0 0 60px rgba(138, 43, 226, 0.2);
+      }
+      33% {
+        box-shadow: 
+          0 0 40px rgba(138, 43, 226, 0.4),
+          0 0 60px rgba(255, 20, 147, 0.2);
+      }
+      66% {
+        box-shadow: 
+          0 0 40px rgba(255, 20, 147, 0.4),
+          0 0 60px rgba(255, 215, 0, 0.2);
+      }
+    }
+
+    .portrait-scene {
+      animation: ambientGlow 10s ease-in-out infinite;
+    }
+
+
+    /* 遗像图片 */
+    .portrait {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+      border-radius: 4px;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: visible;
+      transition: all 0.3s ease;
+    }
+
+    .portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: grayscale(100%) contrast(1.1) brightness(0.9);
+      pointer-events: none;
+    }
+
+    /* 主遗像 - 完全静止 */
+    .portrait.main {
+      z-index: 30;
+      /* 不添加任何动画，保持静态 */
+    }
+
+
+    /* 黑色丝带 */
+    .ribbon {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      width: 80px;
+      height: 80px;
+      background: #000;
+      border: 2px solid #333;
+      transform: rotate(45deg);
+      z-index: 100;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      pointer-events: none;
+    }
+
+    .ribbon::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      height: 60%;
+      background: #1a1a1a;
+    }
+
+    /* 祭文 */
+    .epitaph {
+      color: #d4d4d4;
+      font-size: 1.5rem;
+      text-align: center;
+      line-height: 2;
+      max-width: 600px;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeIn 3s ease-in 1s forwards;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 蜡烛效果 */
+    .candles {
+      display: flex;
+      gap: 4rem;
+      margin-top: 2rem;
+    }
+
+    .candle {
+      position: relative;
+      width: 30px;
+      height: 80px;
+      background: linear-gradient(to bottom, #f4f4f4, #d4d4d4);
+      border-radius: 5px 5px 0 0;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .flame {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 30px;
+      background: radial-gradient(ellipse at center, #fff 0%, #ffeb3b 30%, #ff9800 60%, transparent 100%);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      animation: flicker 2s ease-in-out infinite;
+      filter: blur(1px);
+    }
+
+    .flame::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 15px;
+      background: radial-gradient(ellipse at center, #fff 0%, #fff 50%, transparent 100%);
+      border-radius: 50%;
+    }
+
+    /* 烛光闪烁动画 */
+    @keyframes flicker {
+      0%, 100% {
+        transform: translateX(-50%) scaleY(1);
+        opacity: 1;
+      }
+      25% {
+        transform: translateX(-50%) scaleY(1.1) scaleX(0.95);
+        opacity: 0.9;
+      }
+      50% {
+        transform: translateX(-50%) scaleY(0.95) scaleX(1.05);
+        opacity: 0.95;
+      }
+      75% {
+        transform: translateX(-50%) scaleY(1.05) scaleX(0.9);
+        opacity: 0.85;
+      }
+    }
+
+    /* 淡入动画 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 飘落的花瓣 */
+    .petal {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-10vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* 音乐控制按钮 */
+    .music-control {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .music-control:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .music-control svg {
+      width: 30px;
+      height: 30px;
+      fill: #fff;
+    }
+
+    /* 上香区域 */
+    .incense-section {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      opacity: 0;
+      animation: fadeIn 3s ease-in 1.5s forwards;
+    }
+
+    /* 上香次数显示 */
+    .incense-count {
+      color: #d4d4d4;
+      font-size: 1.2rem;
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .incense-count .number {
+      color: #ffeb3b;
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+      margin: 0 0.5rem;
+    }
+
+    /* 上香按钮 */
+    .incense-button {
+      position: relative;
+      padding: 1rem 3rem;
+      background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+      border: 2px solid rgba(255, 215, 0, 0.5);
+      border-radius: 50px;
+      color: #ffd700;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+      letter-spacing: 0.2rem;
+    }
+
+    .incense-button:hover {
+      background: linear-gradient(145deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3));
+      border-color: rgba(255, 215, 0, 0.8);
+      box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .incense-button:active {
+      transform: translateY(0);
+    }
+
+    .incense-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .incense-button .emoji {
+      display: inline-block;
+      margin-right: 0.5rem;
+      font-size: 1.5rem;
+    }
+
+    /* 上香烟雾动画 */
+    .smoke-particle {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1000;
+      filter: blur(2px);
+      animation: smokeRise 3s ease-out forwards;
+    }
+
+    @keyframes smokeRise {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-200px) scale(2);
+      }
+    }
+
+
+    /* 成功提示 */
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: rgba(0, 0, 0, 0.9);
+      color: #ffd700;
+      padding: 1.5rem 3rem;
+      border-radius: 15px;
+      font-size: 1.5rem;
+      border: 2px solid rgba(255, 215, 0, 0.5);
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+      z-index: 1001;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .toast.show {
+      animation: toastShow 2s ease-in-out forwards;
+    }
+
+    @keyframes toastShow {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+      10% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 1;
+      }
+      20% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      80% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+    }
+
+    /* 火柴人+棺材容器 */
+    .stickman-container {
+      position: fixed;
+      bottom: 150px;
+      left: 50%;
+      width: 600px;
+      height: 200px;
+      pointer-events: none;
+      z-index: 50;
+      animation: 
+        coffinDance 1.2s ease-in-out infinite,
+        coffinWalk 6s ease-in-out infinite;
+    }
+
+    /* 抬棺舞蹈动画（上下颠簸 + 左右摇摆） */
+    @keyframes coffinDance {
+      0%, 100% {
+        transform: translateX(-50%) translateY(0) rotate(0deg);
+      }
+      10% {
+        transform: translateX(-50%) translateY(-18px) rotate(-3deg);
+      }
+      20% {
+        transform: translateX(-50%) translateY(-5px) rotate(0deg);
+      }
+      30% {
+        transform: translateX(-50%) translateY(-20px) rotate(3deg);
+      }
+      40% {
+        transform: translateX(-50%) translateY(-2px) rotate(0deg);
+      }
+      50% {
+        transform: translateX(-50%) translateY(-25px) rotate(-4deg);
+      }
+      60% {
+        transform: translateX(-50%) translateY(0) rotate(0deg);
+      }
+      70% {
+        transform: translateX(-50%) translateY(-20px) rotate(4deg);
+      }
+      80% {
+        transform: translateX(-50%) translateY(-5px) rotate(0deg);
+      }
+      90% {
+        transform: translateX(-50%) translateY(-15px) rotate(-2deg);
+      }
+    }
+
+    /* 走一步退两步（左右走动）*/
+    @keyframes coffinWalk {
+      0% {
+        left: 50%;
+      }
+      /* 向右走一大步 */
+      15% {
+        left: 65%;
+      }
+      /* 向左退一小步 */
+      25% {
+        left: 60%;
+      }
+      /* 向左再退一步 */
+      35% {
+        left: 55%;
+      }
+      /* 快速向右走 */
+      45% {
+        left: 70%;
+      }
+      /* 回到中间 */
+      55% {
+        left: 50%;
+      }
+      /* 向左走一大步 */
+      70% {
+        left: 35%;
+      }
+      /* 向右退一小步 */
+      80% {
+        left: 40%;
+      }
+      /* 向右再退一步 */
+      90% {
+        left: 45%;
+      }
+      /* 回到起点 */
+      100% {
+        left: 50%;
+      }
+    }
+
+    /* 棺材 - 六边形造型 */
+    .coffin {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 280px;
+      height: 110px;
+      background: 
+        linear-gradient(180deg, 
+          #4a2f1a 0%, 
+          #3d2515 20%, 
+          #2d1a0f 40%, 
+          #1f120a 60%, 
+          #2d1a0f 80%, 
+          #3d2515 100%
+        );
+      clip-path: polygon(
+        15% 0%,
+        85% 0%,
+        100% 20%,
+        100% 80%,
+        85% 100%,
+        15% 100%,
+        0% 80%,
+        0% 20%
+      );
+      box-shadow: 
+        0 0 40px rgba(0, 0, 0, 0.9),
+        0 15px 60px rgba(0, 0, 0, 0.8),
+        inset 0 0 80px rgba(0, 0, 0, 0.5),
+        inset 0 -20px 40px rgba(0, 0, 0, 0.7),
+        inset 0 20px 40px rgba(139, 69, 19, 0.2);
+      z-index: 5;
+      position: relative;
+    }
+
+    /* 棺材边框装饰 */
+    .coffin::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: linear-gradient(
+        145deg,
+        rgba(139, 69, 19, 0.3) 0%,
+        rgba(101, 67, 33, 0.2) 50%,
+        rgba(139, 69, 19, 0.3) 100%
+      );
+      clip-path: polygon(
+        15% 0%,
+        85% 0%,
+        100% 20%,
+        100% 80%,
+        85% 100%,
+        15% 100%,
+        0% 80%,
+        0% 20%
+      );
+      border: 2px solid rgba(139, 69, 19, 0.6);
+    }
+
+    /* 棺材木纹效果 */
+    .coffin-wood-grain {
+      position: absolute;
+      inset: 0;
+      background: 
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          rgba(0, 0, 0, 0.1) 2px,
+          transparent 4px,
+          transparent 20px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          transparent 0px,
+          rgba(101, 67, 33, 0.1) 1px,
+          transparent 2px,
+          transparent 8px
+        );
+      clip-path: polygon(
+        15% 0%,
+        85% 0%,
+        100% 20%,
+        100% 80%,
+        85% 100%,
+        15% 100%,
+        0% 80%,
+        0% 20%
+      );
+      pointer-events: none;
+    }
+
+    /* 棺材顶部十字架 */
+    .coffin-cross {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 70px;
+      z-index: 10;
+    }
+
+    .coffin-cross::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 70px;
+      background: linear-gradient(180deg, #ffd700, #d4af37, #b8960c);
+      border-radius: 4px;
+      box-shadow: 
+        0 0 15px rgba(255, 215, 0, 0.8),
+        0 0 30px rgba(255, 215, 0, 0.4),
+        inset 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+
+    .coffin-cross::after {
+      content: '';
+      position: absolute;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 8px;
+      background: linear-gradient(90deg, #ffd700, #d4af37, #b8960c);
+      border-radius: 4px;
+      box-shadow: 
+        0 0 15px rgba(255, 215, 0, 0.8),
+        0 0 30px rgba(255, 215, 0, 0.4),
+        inset 0 0 5px rgba(255, 255, 255, 0.3);
+      animation: crossShine 3s ease-in-out infinite;
+    }
+
+    /* 十字架闪光效果 */
+    @keyframes crossShine {
+      0%, 100% {
+        filter: brightness(1);
+      }
+      50% {
+        filter: brightness(1.4);
+      }
+    }
+
+
+    /* 棺材装饰线条 */
+    .coffin-decoration {
+      position: absolute;
+      left: 15%;
+      right: 15%;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent,
+        rgba(139, 69, 19, 0.6) 20%,
+        rgba(139, 69, 19, 0.8) 50%,
+        rgba(139, 69, 19, 0.6) 80%,
+        transparent
+      );
+    }
+
+    .coffin-decoration.top {
+      top: 20%;
+    }
+
+    .coffin-decoration.bottom {
+      bottom: 20%;
+    }
+
+    /* 棺材铜钉装饰 */
+    .coffin-nail {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: radial-gradient(circle, #c9a961, #8b7355, #4a4035);
+      border-radius: 50%;
+      box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    }
+
+    .coffin-nail:nth-child(1) { top: 15%; left: 20%; }
+    .coffin-nail:nth-child(2) { top: 15%; right: 20%; }
+    .coffin-nail:nth-child(3) { bottom: 15%; left: 20%; }
+    .coffin-nail:nth-child(4) { bottom: 15%; right: 20%; }
+    .coffin-nail:nth-child(5) { top: 50%; left: 15%; }
+    .coffin-nail:nth-child(6) { top: 50%; right: 15%; }
+
+    /* 火柴人基础样式 */
+    .stickman {
+      position: absolute;
+      bottom: 0;
+      width: 80px;
+      height: 150px;
+      transform-origin: bottom center;
+    }
+
+    /* 左侧抬棺人 */
+    .stickman.akile {
+      left: 50px;
+    }
+
+    /* 右侧抬棺人 */
+    .stickman.hytron {
+      right: 50px;
+    }
+
+    /* 火柴人头部（使用图片） */
+    .stickman-head {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background-size: cover;
+      background-position: center;
+      background-color: #fff;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      animation: headBob 0.6s ease-in-out infinite alternate;
+      overflow: hidden;
+    }
+
+    .stickman.akile .stickman-head {
+      background-image: url('./public/assets/images/akile.jpg');
+      background-size: cover;
+    }
+
+    .stickman.hytron .stickman-head {
+      background-image: url('./public/assets/images/hytron.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    /* 火柴人身体 */
+    .stickman-body {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      width: 3px;
+      height: 40px;
+      background: #fff;
+      transform: translateX(-50%);
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+
+    /* 火柴人手臂 */
+    .stickman-arm {
+      position: absolute;
+      top: 60px;
+      width: 35px;
+      height: 3px;
+      background: #fff;
+      transform-origin: center;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+
+    .stickman-arm.left {
+      left: 5px;
+      animation: armSwingLeft 0.6s ease-in-out infinite alternate;
+    }
+
+    .stickman-arm.right {
+      right: 5px;
+      animation: armSwingRight 0.6s ease-in-out infinite alternate;
+    }
+
+    /* 火柴人腿 */
+    .stickman-leg {
+      position: absolute;
+      top: 90px;
+      width: 3px;
+      height: 50px;
+      background: #fff;
+      transform-origin: top center;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+
+    .stickman-leg.left {
+      left: 30px;
+      animation: legKickLeft 0.6s ease-in-out infinite alternate;
+    }
+
+    .stickman-leg.right {
+      right: 30px;
+      animation: legKickRight 0.6s ease-in-out infinite alternate;
+    }
+
+    /* 抬棺舞蹈 - 左侧火柴人 */
+    .stickman.akile {
+      animation: pallbearerLeft 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pallbearerLeft {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      25% {
+        transform: translateY(-10px) rotate(-3deg);
+      }
+      50% {
+        transform: translateY(-5px) rotate(2deg);
+      }
+      75% {
+        transform: translateY(-15px) rotate(-2deg);
+      }
+    }
+
+    /* 抬棺舞蹈 - 右侧火柴人 */
+    .stickman.hytron {
+      animation: pallbearerRight 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pallbearerRight {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      25% {
+        transform: translateY(-10px) rotate(3deg);
+      }
+      50% {
+        transform: translateY(-5px) rotate(-2deg);
+      }
+      75% {
+        transform: translateY(-15px) rotate(2deg);
+      }
+    }
+
+    /* 抬棺时的头部节奏摇摆 */
+    @keyframes headBob {
+      0%, 100% {
+        transform: translateX(-50%) rotate(0deg);
+      }
+      25% {
+        transform: translateX(-50%) rotate(-15deg);
+      }
+      50% {
+        transform: translateX(-50%) rotate(0deg);
+      }
+      75% {
+        transform: translateX(-50%) rotate(15deg);
+      }
+    }
+
+    /* 抬棺手臂 - 左臂向上托举 */
+    @keyframes armSwingLeft {
+      0%, 100% {
+        transform: rotate(-100deg);
+      }
+      50% {
+        transform: rotate(-110deg);
+      }
+    }
+
+    /* 抬棺手臂 - 右臂向上托举 */
+    @keyframes armSwingRight {
+      0%, 100% {
+        transform: rotate(100deg);
+      }
+      50% {
+        transform: rotate(110deg);
+      }
+    }
+
+    /* 抬棺步伐 - 左腿（走路效果）*/
+    @keyframes legKickLeft {
+      0% {
+        transform: rotate(25deg);
+      }
+      12.5% {
+        transform: rotate(-30deg);
+      }
+      25% {
+        transform: rotate(20deg);
+      }
+      37.5% {
+        transform: rotate(-25deg);
+      }
+      50% {
+        transform: rotate(25deg);
+      }
+      62.5% {
+        transform: rotate(-30deg);
+      }
+      75% {
+        transform: rotate(20deg);
+      }
+      87.5% {
+        transform: rotate(-20deg);
+      }
+      100% {
+        transform: rotate(25deg);
+      }
+    }
+
+    /* 抬棺步伐 - 右腿（走路效果）*/
+    @keyframes legKickRight {
+      0% {
+        transform: rotate(-25deg);
+      }
+      12.5% {
+        transform: rotate(30deg);
+      }
+      25% {
+        transform: rotate(-20deg);
+      }
+      37.5% {
+        transform: rotate(25deg);
+      }
+      50% {
+        transform: rotate(-25deg);
+      }
+      62.5% {
+        transform: rotate(30deg);
+      }
+      75% {
+        transform: rotate(-20deg);
+      }
+      87.5% {
+        transform: rotate(20deg);
+      }
+      100% {
+        transform: rotate(-25deg);
+      }
+    }
+
+    /* 音符装饰 */
+    .music-note {
+      position: absolute;
+      font-size: 28px;
+      opacity: 0;
+      animation: floatNote 2.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.8));
+    }
+
+    .music-note:nth-child(7) {
+      top: -35px;
+      left: 15%;
+      animation-delay: 0s;
+    }
+
+    .music-note:nth-child(8) {
+      top: -55px;
+      left: 75%;
+      animation-delay: 0.6s;
+    }
+
+    @keyframes floatNote {
+      0% {
+        opacity: 0;
+        transform: translateY(0) rotate(0deg) scale(0.8);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-15px) rotate(10deg) scale(1);
+      }
+      60% {
+        opacity: 1;
+        transform: translateY(-30px) rotate(20deg) scale(1.1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-50px) rotate(35deg) scale(0.8);
+      }
+    }
+
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      body {
+        min-height: 100vh;
+      }
+
+      .memorial-container {
+        padding: 1.5rem 1rem 3rem 1rem;
+        min-height: auto;
+      }
+
+      .memorial-title {
+        font-size: 2rem;
+        letter-spacing: 0.3rem;
+        margin-bottom: 2rem;
+      }
+
+      .portrait-container {
+        width: 280px;
+        height: 280px;
+        margin-bottom: 1.5rem;
+        perspective: 800px;
+      }
+
+
+      .epitaph {
+        font-size: 1.2rem;
+        padding: 0 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .candles {
+        gap: 2rem;
+        margin-top: 1.5rem;
+      }
+
+      .incense-section {
+        margin-top: 2rem;
+      }
+
+      .incense-button {
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+      }
+
+      .incense-count {
+        font-size: 1rem;
+      }
+
+      .incense-count .number {
+        font-size: 1.5rem;
+      }
+
+      .music-control {
+        bottom: 1rem;
+        right: 1rem;
+        width: 50px;
+        height: 50px;
+      }
+
+      .music-control svg {
+        width: 25px;
+        height: 25px;
+      }
+
+      /* 移动端抬棺调整 */
+      .stickman-container {
+        bottom: 100px;
+        width: 400px;
+        height: 160px;
+      }
+
+      /* 移动端走动范围调整 */
+      @keyframes coffinWalk {
+        0% {
+          left: 50%;
+        }
+        15% {
+          left: 60%;
+        }
+        25% {
+          left: 57%;
+        }
+        35% {
+          left: 53%;
+        }
+        45% {
+          left: 63%;
+        }
+        55% {
+          left: 50%;
+        }
+        70% {
+          left: 40%;
+        }
+        80% {
+          left: 43%;
+        }
+        90% {
+          left: 47%;
+        }
+        100% {
+          left: 50%;
+        }
+      }
+
+      .coffin {
+        width: 200px;
+        height: 70px;
+        bottom: 60px;
+      }
+
+      .coffin::before {
+        width: 40px;
+        height: 55px;
+      }
+
+
+      .stickman {
+        width: 60px;
+        height: 120px;
+      }
+
+      .stickman.akile {
+        left: 30px;
+      }
+
+      .stickman.hytron {
+        right: 30px;
+      }
+
+      .stickman-head {
+        width: 40px;
+        height: 40px;
+      }
+
+      .stickman-body {
+        height: 30px;
+        top: 40px;
+      }
+
+      .stickman-arm {
+        width: 25px;
+        top: 50px;
+      }
+
+      .stickman-leg {
+        height: 40px;
+        top: 70px;
+      }
+
+      .stickman-leg.left {
+        left: 22px;
+      }
+
+      .stickman-leg.right {
+        right: 22px;
+      }
+    }
+  </style>
+
+
+
 
